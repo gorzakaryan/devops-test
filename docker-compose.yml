@@ -1,0 +1,73 @@
+services:
+    nginx:
+        image: nginx:1.25-alpine
+        #container_name: nginx1.25-alpine
+        restart: unless-stopped
+        ports:
+            - "${FORWARD_HTTP_PORT:-8080}:80"
+        volumes:
+            - ./:/var/www
+            - ./docker/nginx/default.conf:/etc/nginx/conf.d/default.conf:ro # :ro նշանակում է Read-Only
+        depends_on:
+            - saas
+        networks:
+            - app-network
+
+    saas:
+        build:
+            context: ./docker/saas
+        image: saas:php8.3-fpm # Քո սեփական անուն
+        #container_name: saas
+        restart: unless-stopped
+        working_dir: /var/www
+        ports:
+            - "8084:8080"
+        volumes:
+            - ./:/var/www
+        deploy:
+            resources:
+                limits:
+                    memory: 512M
+                reservations:
+                    memory: 128M # Երաշխավորված նվազագույն հիշողությունը
+        environment:
+            # Այստեղ կարելի է փոխանցել Laravel-ի համար անհրաժեշտ փոփոխականները
+            DB_CONNECTION: pgsql
+            DB_HOST: postgres
+            DB_PORT: 5432
+            DB_DATABASE: ${DB_DATABASE}
+            DB_USERNAME: ${DB_USERNAME}
+            DB_PASSWORD: ${DB_PASSWORD}
+        depends_on:
+            - postgres
+            - redis
+        networks:
+            - app-network
+
+    postgres:
+        image: postgres:16-alpine
+        #container_name: postgres15-alpine
+        restart: unless-stopped
+        environment:
+            # Մենք հղում ենք անում փոփոխականին, որը կվերցվի .env ֆայլից
+            POSTGRES_DB: ${DB_DATABASE}
+            POSTGRES_USER: ${DB_USERNAME}
+            POSTGRES_PASSWORD: ${DB_PASSWORD}
+        volumes:
+            - pgdata:/var/lib/postgresql/data # Սա պարտադիր է, որ տվյալները չկորչեն
+        networks:
+            - app-network
+
+    redis:
+        image: redis:7.2-alpine
+        #container_name: redis7.2-alpine
+        restart: unless-stopped
+        networks:
+            - app-network
+
+networks:
+    app-network:
+        driver: bridge
+
+volumes:
+    pgdata:

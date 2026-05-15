@@ -1,0 +1,28 @@
+stages:
+  - test
+  - deploy
+
+variables:
+  APP_ENV: production
+  DEPLOY_PATH: /var/www/html/saas
+
+cache:
+  paths:
+    - vendor/
+
+test:
+  stage: test
+  image: php:8.2
+  script:
+    - apt update && apt install -y unzip git curl libzip-dev
+    - docker-php-ext-install zip pdo pdo_pgsql
+    - curl -sS https://getcomposer.org/installer | php
+    - php composer.phar install
+    - php artisan test
+
+deploy:
+  stage: deploy
+  script:
+    - ssh gor-admin@127.0.0.1 "cd $DEPLOY_PATH && git pull origin master && composer install && php artisan migrate --force"
+  only:
+    - main
