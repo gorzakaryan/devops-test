@@ -1,0 +1,25 @@
+name: Laravel Deploy
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Execute deploy
+        uses: appleboy/ssh-action@v1.0.3
+
+        with:
+          host: ${{ secrets.SSH_HOST }}
+          username: ${{ secrets.SSH_USER }}
+          key: ${{ secrets.SSH_KEY }}
+
+          script: |
+            echo "CONNECTED SUCCESSFULLY"
+            whoami
+            pwd
+            docker --version
