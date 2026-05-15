@@ -17,6 +17,10 @@ Route::get('/debug-server', function () {
     ]);
 });
 
+Route::get('/devops', function () {
+    return view('devops');
+});
+
 
 Route::get('/', function () {
     return view('chat');
