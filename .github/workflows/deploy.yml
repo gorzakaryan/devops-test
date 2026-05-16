@@ -55,8 +55,7 @@ jobs:
             echo "=================================="
             echo "Start Reverb (WebSocket)"
             echo "=================================="
-            docker compose restart saas
-            docker compose exec -d saas php artisan reverb:start || true
+            docker compose exec -T saas php artisan reverb:start || true
 
             echo "=================================="
             echo "Rebuild containers (if needed)"
