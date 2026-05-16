@@ -28,15 +28,12 @@ jobs:
             echo "=================================="
             echo "Pull latest code"
             echo "=================================="
-            git switch master
+            git switch master || true
             git reset --hard
             git pull origin master
 
-            echo "Install node modules"
-            npm install
-
             echo "Build frontend"
-            npm run dev
+            npm run build
 
             docker compose exec -T saas php artisan optimize:clear
             docker compose exec -T saas php artisan config:cache
