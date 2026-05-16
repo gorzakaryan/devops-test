@@ -18,7 +18,6 @@ jobs:
           username: ${{ secrets.SSH_USER }}
           key: ${{ secrets.SSH_KEY }}
           port: ${{ secrets.SSH_PORT }}
-
           script: |
             cd /var/www/html/saas
 
@@ -47,9 +46,7 @@ jobs:
             echo "Restart queue"
             docker compose exec -T saas php artisan queue:restart
 
-            echo "Reverb start"
+            echo "Restart reverb"
             docker compose exec -T saas php artisan reverb:start
-
-#            docker compose restart saas
 
             echo "Deploy finished"
