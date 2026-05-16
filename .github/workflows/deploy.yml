@@ -1,4 +1,4 @@
-name: Laravel Deploy
+name: Laravel Production Deploy
 
 on:
   push:
@@ -11,42 +11,55 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Deploy to Server
+      - name: Deploy to Server via SSH
         uses: appleboy/ssh-action@v1.0.3
         with:
           host: ${{ secrets.SSH_HOST }}
           username: ${{ secrets.SSH_USER }}
           key: ${{ secrets.SSH_KEY }}
           port: ${{ secrets.SSH_PORT }}
+
           script: |
+            set -e
+
             cd /var/www/html/saas
 
-            echo "Pull latest changes"
+            echo "=================================="
+            echo "Pull latest code"
+            echo "=================================="
+            git reset --hard
             git pull origin master
 
-            echo "Install node modules"
-            npm install
-
-#            echo "Build frontend"
-#            npm run build
-
-            echo "Run frontend"
-            npm run dev
-
-            echo "Restart docker containers"
-#            docker compose down
-            docker compose up -d --build
-
-            echo "Laravel clear cache"
             docker compose exec -T saas php artisan optimize:clear
+            docker compose exec -T saas php artisan config:cache
+            docker compose exec -T saas php artisan route:cache
+            docker compose exec -T saas php artisan view:cache
 
+            echo "=================================="
             echo "Run migrations"
+            echo "=================================="
             docker compose exec -T saas php artisan migrate --force
 
-            echo "Restart queue"
+            echo "=================================="
+            echo "Restart queues (safe)"
+            echo "=================================="
             docker compose exec -T saas php artisan queue:restart
 
-            echo "Restart reverb"
-            docker compose exec -T saas php artisan reverb:start
+            echo "=================================="
+            echo "Start Reverb (WebSocket)"
+            echo "=================================="
+            docker compose exec -T saas php artisan reverb:start || true
 
-            echo "Deploy finished"
+            echo "=================================="
+            echo "Rebuild containers (if needed)"
+            echo "=================================="
+            docker compose up -d --build
+
+            echo "=================================="
+            echo "Bring app back online"
+            echo "=================================="
+            docker compose exec -T saas php artisan up || true
+
+            echo "=================================="
+            echo "Deploy finished successfully"
+            echo "=================================="
