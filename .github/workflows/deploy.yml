@@ -2,15 +2,13 @@ name: Laravel Production Deploy
 
 on:
   push:
-    branches-ignore:
-      - 'devops-test'
-      - 'feature/**'   # wildcard pattern
     branches:
       - master
   workflow_dispatch:  # ← adds manual trigger
 
 jobs:
   deploy:
+    if: github.ref == 'refs/heads/master'
     runs-on: ubuntu-latest
 
     steps:
