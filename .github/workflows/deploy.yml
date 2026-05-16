@@ -7,6 +7,7 @@ on:
 
 jobs:
   deploy:
+    if: false
     runs-on: ubuntu-latest
 
     steps:
@@ -38,16 +39,18 @@ jobs:
 #            docker compose down
             docker compose up -d --build
 
-            echo "Laravel optimize clear"
+            echo "Laravel clear cache"
             docker compose exec -T saas php artisan optimize:clear
 
             echo "Run migrations"
             docker compose exec -T saas php artisan migrate --force
 
-            echo "Queue restart"
+            echo "Restart queue"
             docker compose exec -T saas php artisan queue:restart
 
             echo "Reverb start"
             docker compose exec -T saas php artisan reverb:start
+
+#            docker compose restart saas
 
             echo "Deploy finished"
