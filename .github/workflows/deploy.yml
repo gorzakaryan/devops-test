@@ -10,7 +10,7 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Execute deploy
+      - name: Deploy to Server
         uses: appleboy/ssh-action@v1.0.3
 
         with:
@@ -20,7 +20,34 @@ jobs:
           port: ${{ secrets.SSH_PORT }}
 
           script: |
-            echo "CONNECTED SUCCESSFULLY"
-            whoami
-            pwd
-            docker --version
+            cd /var/www/html/saas
+
+            echo "Pull latest changes"
+            git pull origin master
+
+            echo "Install node modules"
+            npm install
+
+#            echo "Build frontend"
+#            npm run build
+
+            echo "Run frontend"
+            npm run dev
+
+            echo "Restart docker containers"
+#            docker compose down
+            docker compose up -d --build
+
+            echo "Laravel optimize clear"
+            docker compose exec -T saas php artisan optimize:clear
+
+            echo "Run migrations"
+            docker compose exec -T saas php artisan migrate --force
+
+            echo "Queue restart"
+            docker compose exec -T saas php artisan queue:restart
+
+            echo "Reverb start"
+            docker compose exec -T saas php artisan reverb:start
+
+            echo "Deploy finished"
