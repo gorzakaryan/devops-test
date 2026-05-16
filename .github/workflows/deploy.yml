@@ -2,6 +2,9 @@ name: Laravel Production Deploy
 
 on:
   push:
+    branches-ignore:
+      - 'devops-test'
+      - 'feature/**'   # wildcard pattern
     branches:
       - master
   workflow_dispatch:  # ← adds manual trigger
@@ -27,8 +30,15 @@ jobs:
             echo "=================================="
             echo "Pull latest code"
             echo "=================================="
+            git switch master
             git reset --hard
             git pull origin master
+
+            echo "Install node modules"
+            npm install
+
+            echo "Build frontend"
+            npm run dev
 
             docker compose exec -T saas php artisan optimize:clear
             docker compose exec -T saas php artisan config:cache
@@ -48,7 +58,9 @@ jobs:
             echo "=================================="
             echo "Start Reverb (WebSocket)"
             echo "=================================="
-            docker compose exec -T saas php artisan reverb:start || true
+            docker compose exec saas pkill -f reverb
+            docker compose restart saas
+            docker compose exec -d saas php artisan reverb:start || true
 
             echo "=================================="
             echo "Rebuild containers (if needed)"
