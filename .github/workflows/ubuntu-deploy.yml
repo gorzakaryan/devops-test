@@ -12,7 +12,7 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Deploy to Server via SSH
+      - name: Deploy to Ubuntu Server via SSH
         uses: appleboy/ssh-action@v1.0.3
         with:
           host: ${{ secrets.SSH_HOST }}
@@ -25,48 +25,39 @@ jobs:
             export NVM_DIR="$HOME/.nvm"
             [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"
 
-            cd /var/www/html/saas
+            cd /var/www/html/devops
 
             echo "=================================="
             echo "Pull latest code"
             echo "=================================="
-            git switch master || true
             git reset --hard
             git pull origin master
+
+            composer install
 
             echo "Build frontend"
             npm run build
 
-            docker compose exec -T saas php artisan optimize:clear
-            docker compose exec -T saas php artisan config:cache
-            docker compose exec -T saas php artisan route:cache
-            docker compose exec -T saas php artisan view:cache
+            php artisan optimize:clear
+            php artisan config:cache
+            php artisan route:cache
+            php artisan view:cache
 
             echo "=================================="
             echo "Run migrations"
             echo "=================================="
-            docker compose exec -T saas php artisan migrate --force
+            php artisan migrate --force
 
             echo "=================================="
             echo "Restart queues (safe)"
             echo "=================================="
-            docker compose exec -T saas php artisan queue:restart
+            php artisan queue:restart
 
             echo "=================================="
             echo "Start Reverb (WebSocket)"
             echo "=================================="
-            docker compose exec -T saas php artisan reverb:start || true
+            php artisan reverb:start || true
 
             echo "=================================="
-            echo "Rebuild containers (if needed)"
-            echo "=================================="
-            docker compose up -d --build
-
-            echo "=================================="
-            echo "Bring app back online"
-            echo "=================================="
-            docker compose exec -T saas php artisan up || true
-
-            echo "=================================="
-            echo "Deploy finished successfully"
+            echo "UBUNTU Deploy finished successfully"
             echo "=================================="

@@ -44,6 +44,73 @@ services:
         networks:
             - app-network
 
+    queue:
+        build:
+            context: ./docker/saas
+        image: saas:php8.3-fpm
+        restart: unless-stopped
+        working_dir: /var/www
+        command: php artisan queue:work
+        volumes:
+            - ./:/var/www
+        depends_on:
+            - postgres
+            - redis
+        environment:
+            DB_CONNECTION: pgsql
+            DB_HOST: postgres
+            DB_PORT: 5432
+            DB_DATABASE: ${DB_DATABASE}
+            DB_USERNAME: ${DB_USERNAME}
+            DB_PASSWORD: ${DB_PASSWORD}
+        networks:
+            - app-network
+
+    scheduler:
+        build:
+            context: ./docker/saas
+        image: saas:php8.3-fpm
+        restart: unless-stopped
+        working_dir: /var/www
+        command: sh -c "while true; do php artisan schedule:run; sleep 60; done"
+        volumes:
+            - ./:/var/www
+        depends_on:
+            - postgres
+            - redis
+        environment:
+            DB_CONNECTION: pgsql
+            DB_HOST: postgres
+            DB_PORT: 5432
+            DB_DATABASE: ${DB_DATABASE}
+            DB_USERNAME: ${DB_USERNAME}
+            DB_PASSWORD: ${DB_PASSWORD}
+        networks:
+            - app-network
+
+    reverb:
+        build:
+            context: ./docker/saas
+        image: saas:php8.3-fpm
+        restart: unless-stopped
+        working_dir: /var/www
+        command: php artisan reverb:start --host=0.0.0.0 --port=8080
+        ports:
+            - "8085:8080"
+        volumes:
+            - ./:/var/www
+        depends_on:
+            - redis
+        environment:
+            DB_CONNECTION: pgsql
+            DB_HOST: postgres
+            DB_PORT: 5432
+            DB_DATABASE: ${DB_DATABASE}
+            DB_USERNAME: ${DB_USERNAME}
+            DB_PASSWORD: ${DB_PASSWORD}
+        networks:
+            - app-network
+
     postgres:
         image: postgres:16-alpine
         #container_name: postgres15-alpine
