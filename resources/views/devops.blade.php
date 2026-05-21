@@ -7,6 +7,6 @@
 <h1>Welcome 🚀</h1>
 <h1>DEVOPS TEST</h1>
 <h1>Seperated deploys</h1>
-<h1>Worked on Ubuntu deploys</h1>
+<h1>Fixed Ubuntu deploys</h1>
 </body>
 </html>
