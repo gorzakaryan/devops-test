@@ -52,12 +52,12 @@ jobs:
             echo "=================================="
             echo "Restart queues (safe)"
             echo "=================================="
-            nohup php artisan queue:restart > /dev/null 2>&1 & || true
+            nohup php artisan queue:restart > /dev/null 2>&1 &
 
             echo "=================================="
             echo "Start Reverb (WebSocket)"
             echo "=================================="
-            nohup php artisan reverb:start > /dev/null 2>&1 & || true
+            nohup php artisan reverb:start > /dev/null 2>&1 &
 
             echo "=================================="
             echo "UBUNTU Deploy finished successfully"
