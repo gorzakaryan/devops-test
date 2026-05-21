@@ -1,9 +1,9 @@
 name: Docker Deploy
 
 on:
-  push:
-    branches:
-      - master
+#  push:
+#    branches:
+#      - master
   workflow_dispatch:  # ← adds manual trigger
 
 jobs:

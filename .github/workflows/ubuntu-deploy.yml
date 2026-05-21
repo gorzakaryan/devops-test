@@ -1,9 +1,9 @@
 name: Ubuntu Deploy
 
 on:
-  push:
-    branches:
-      - master
+#  push:
+#    branches:
+#      - master
   workflow_dispatch:  # ← adds manual trigger
 
 jobs:
@@ -36,6 +36,7 @@ jobs:
             composer install
 
             echo "Build frontend"
+            npm install
             npm run build
 
             php artisan optimize:clear
@@ -51,7 +52,7 @@ jobs:
             echo "=================================="
             echo "Restart queues (safe)"
             echo "=================================="
-            php artisan queue:restart
+            php artisan queue:restart || true
 
             echo "=================================="
             echo "Start Reverb (WebSocket)"
