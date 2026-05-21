@@ -1,0 +1,63 @@
+name: Laravel Production Deploy
+
+on:
+  push:
+    branches:
+      - master
+  workflow_dispatch:  # ← adds manual trigger
+
+jobs:
+  deploy:
+    if: github.ref == 'refs/heads/master'
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Deploy to Docker Server via SSH
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.SSH_HOST }}
+          username: ${{ secrets.SSH_USER }}
+          key: ${{ secrets.SSH_KEY }}
+          port: ${{ secrets.SSH_PORT }}
+
+          script: |
+            set -e
+            export NVM_DIR="$HOME/.nvm"
+            [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"
+
+            cd /var/www/html/saas
+
+            echo "=================================="
+            echo "Pull latest code"
+            echo "=================================="
+            git switch master || true
+            git reset --hard
+            git pull origin master
+
+            echo "Build frontend"
+            npm run build
+
+            docker compose exec -T saas php artisan optimize:clear
+            docker compose exec -T saas php artisan config:cache
+            docker compose exec -T saas php artisan route:cache
+            docker compose exec -T saas php artisan view:cache
+
+            echo "=================================="
+            echo "Run migrations"
+            echo "=================================="
+            docker compose exec -T saas php artisan migrate --force
+
+            echo "=================================="
+            echo "Rebuild containers (if needed)"
+            echo "=================================="
+            docker compose down
+            docker compose up -d --build
+
+            echo "=================================="
+            echo "Bring app back online"
+            echo "=================================="
+            docker compose exec -T saas php artisan up || true
+
+            echo "=================================="
+            echo "DOCKER Deploy finished successfully"
+            echo "=================================="
